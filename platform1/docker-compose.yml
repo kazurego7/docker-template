@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+
+  web_app:
+    build:
+      context: ./web_app/build
+    volumes:
+      # webapps
+      - type: bind
+        source: ./web_app/run/webapps
+        target: /usr/local/tomcat/webapps
+      # log
+      - type: bind
+        source: ./web_app/run/log
+        target: /usr/local/tomcat/logs
+    ports:
+      - "8080:8080"

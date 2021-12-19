@@ -1,0 +1,58 @@
+version: '3.7'
+
+secrets:
+  pg_password_postgres:
+    file: ./app_db/run/secrets/pg_password_postgres
+
+services:
+
+  app_db:
+    build:
+      context: ./app_db/build
+    environment:
+      # password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/pg_password_postgres
+      # mounted sub directory
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    secrets:
+      - pg_password_postgres
+    volumes:
+      # data
+      - type: bind
+        source: ./app_db/run/data
+        target: /var/lib/postgresql/data
+      # init
+      - type: bind
+        source: ./app_db/run/init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+      # log
+      - type: bind
+        source: ./app_db/run/log
+        target: /var/log/postgresql
+    ports:
+      - "5432:5432"
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+      - "-c"
+      - "hba_file=/etc/postgresql/pg_hba.conf"
+
+  db_bat:
+    build:
+      context: ./db_bat/build
+    volumes:
+      # bin
+      - type: bind
+        source: ./db_bat/run/bin
+        target: /var/lib/${PROJECT_ID}/db_bat/bin
+        read_only: true
+      # log
+      - type: bind
+        source: ./db_bat/run/log
+        target: /var/lib/pgsql
+    command:
+      - "java"
+      - "-jar"
+      - "/var/lib/${PROJECT_ID}/db_bat/bat.jar"
